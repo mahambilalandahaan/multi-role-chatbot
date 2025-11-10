@@ -8,16 +8,17 @@ Original file is located at
 """
 
 # ==========================================
-# 🤖 Gradio Chatbot (Final Working Version)
+# 🤖 Gradio Chatbot (Final Version + Clear Button)
 # ==========================================
+
 import gradio as gr
 from openai import OpenAI
 import os
 
-# -------------------------------
+# ------------------------------
 # 🔐 API Connection
-# -------------------------------
-api_key =os.getenv("OPENROUTER_API_KEY")
+# ------------------------------
+api_key = os.getenv("API_KEY")
 base_url = "https://openrouter.ai/api/v1"
 client = OpenAI(base_url=base_url, api_key=api_key)
 
@@ -25,68 +26,97 @@ client = OpenAI(base_url=base_url, api_key=api_key)
 # 🎭 Roles, Styles, Lengths
 # -------------------------------
 chatbot_roles = {
-    "teacher": "You are a teacher who explains things clearly.",
-    "friend": "You are a friend who listens and supports the user.",
-    "advisor": "You are an advisor who offers practical guidance.",
-    "casual": "You are a chatbot that speaks naturally.",
-    "mentor": "You are a career mentor who gives advice."
+    "👨🏻‍🏫 Teacher 👨🏻‍🏫": "You are a teacher who explains things clearly.",
+    "👲🏻 Friend 👲🏻": "You are a friend who listens and supports the user.",
+    "👨🏻‍💻 Advisor 👨🏻‍💻": "You are an advisor who offers practical guidance.",
+    "🧔🏻 Casual 🧔🏻": "You are a chatbot that speaks naturally.",
+    "🕵🏻‍♂️ Mentor 🕵🏻‍♂️": "You are a career mentor who gives advice."
 }
 
 chat_styles = {
-    "formal": "Speak politely and use professional language.",
-    "friendly": "Speak warmly and casually with emojis 😊.",
-    "sarcastic": "Use light sarcasm and humor 😏.",
-    "poetic": "Respond creatively and use expressive language 🎭."
+    "Formal": "Speak politely and use professional language.",
+    "Friendly": "Speak warmly and casually with emojis 😊.",
+    "Sarcastic": "Use light sarcasm and humor 😏.",
+    "Poetic": "Respond creatively and use expressive language 🎭."
 }
 
 reply_length = {
-    "detailed": "Give a detailed answer with explanation of 5–6 lines.",
-    "short": "Give a concise answer not more than 2 lines."
+    "Detailed": "Give a detailed answer with explanation of 5–6 lines.",
+    "Short": "Give a concise answer not more than 2 lines."
 }
 
 # -------------------------------
 # 🧠 Chat Function
 # -------------------------------
 def chatbot_response(message, history, role, style, length):
-    # System prompt (role + style + reply length)
+    if history is None:
+        history = []
+
+    # System prompt
     system_prompt = f"{chatbot_roles[role]} {chat_styles[style]} {reply_length[length]}"
 
-    # Convert Gradio chat history (list of [user, bot]) to OpenAI message format
+    # Convert Gradio chat history to OpenAI message format
     messages = [{"role": "system", "content": system_prompt}]
-    for user_msg, bot_msg in history[-6:]:  # limit memory
+    for user_msg, bot_msg in history[-6:]:
         messages.append({"role": "user", "content": user_msg})
         messages.append({"role": "assistant", "content": bot_msg})
 
     # Add current user message
     messages.append({"role": "user", "content": message})
 
-    # Get model response
+    # Call OpenAI / OpenRouter model
     response = client.chat.completions.create(
         model="mistralai/mistral-7b-instruct",
         messages=messages
     )
-
-    # Return only the text (string)
     reply = response.choices[0].message.content.strip()
-    return reply
+
+    # Update chat history
+    history.append((message, reply))
+    return history, history, ""
+
 
 # -------------------------------
-# 🎨 Gradio UI
+# 🧹 Clear Chat Function
+# -------------------------------
+def clear_chat():
+    return [], []  # clears chatbot and chat history
+
+
+# -------------------------------
+# 🎨 Gradio UI (with Clear Button)
 # -------------------------------
 with gr.Blocks(theme=gr.themes.Soft(primary_hue="indigo")) as demo:
-    gr.Markdown("## 🤖 Multi-Role Chatbot (Working Version)\nChat naturally — press **Enter** to send!")
+    gr.Markdown("## 🤖 Multi-Role Chatbot\n### Your AI adapts to your mood, style & purpose 🎭")
 
     with gr.Row():
-        role_dropdown = gr.Dropdown(choices=list(chatbot_roles.keys()), value="casual", label="Role")
-        style_dropdown = gr.Dropdown(choices=list(chat_styles.keys()), value="friendly", label="Style")
-        length_dropdown = gr.Dropdown(choices=list(reply_length.keys()), value="detailed", label="Reply Length")
+        role_dropdown = gr.Dropdown(choices=list(chatbot_roles.keys()), value="🧔🏻 Casual 🧔🏻", label="Role")
+        style_dropdown = gr.Dropdown(choices=list(chat_styles.keys()), value="Friendly", label="Style")
+        length_dropdown = gr.Dropdown(choices=list(reply_length.keys()), value="Short", label="Reply Length")
 
-    # ✅ clear_btn removed (Gradio includes it by default)
-    chat = gr.ChatInterface(
-        fn=chatbot_response,
-        additional_inputs=[role_dropdown, style_dropdown, length_dropdown],
-        title="AI Chatbot 💬",
-        textbox=gr.Textbox(placeholder="Type your message and press Enter...", show_label=False)
-    )
+    chat = gr.Chatbot(label="AI Assistant 💬 — Ready to Chat!")
+    msg = gr.Textbox(placeholder="Type your message and press Enter...", show_label=False)
+    chat_state = gr.State([])
 
-demo.launch(share=True)
+    with gr.Row():
+        clear_btn = gr.Button("🧹 Clear Chat")
+
+    # Chat submit
+    msg.submit(chatbot_response,
+               [msg, chat_state, role_dropdown, style_dropdown, length_dropdown],
+               [chat, chat_state, msg])
+
+    # Clear button functionality
+    clear_btn.click(clear_chat, None, [chat, chat_state])
+
+    gr.Markdown("""
+    ---
+    🪪 **Created by Madiha Atif**  
+    🌐 Powered by a high-quality AI API for natural conversations  
+    📘 Licensed under MIT – Educational AI Assistant Project © 2025
+    """)
+
+demo.launch()
+
+
+
