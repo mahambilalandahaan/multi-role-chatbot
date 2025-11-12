@@ -89,9 +89,9 @@ This project is released under the **MIT License** for **educational and persona
 ## 🧩 Optional Add-Ons (for Buyers)
 | Add-on | Description | Extra Fee |
 |--------|--------------|-----------|
-| 🎨 Custom Branding | Add your logo, name, or theme | +$100 |
-| 💬 New Roles | Create unique role personalities | +$150 |
-| 🌍 Multilingual Chat | Add multi-language model support | +$200 |
+| 🎨 Custom Branding | Add your logo, name, or theme | +$10 |
+| 💬 New Roles | Create unique role personalities | +$15 |
+| 🌍 Multilingual Chat | Add multi-language model support | +$20 |
 
 > This chatbot was built under educational guidance with a focus on **ethics**, **clarity**, and **real-world usability**.  
 > ✅ Ideal for **students, educators, startups, and AI enthusiasts**.
